@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Data Leads PARKEE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-text h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .header-text p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .btn-secondary:hover {
+            background: #bdc3c7;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        #csvFile {
+            display: none;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select {
+            padding: 10px 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* KPI Cards */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #3498db;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .kpi-card.leads {
+            border-left-color: #3498db;
+        }
+
+        .kpi-card.followup {
+            border-left-color: #2ecc71;
+        }
+
+        .kpi-card.transfer {
+            border-left-color: #f39c12;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .kpi-subtitle {
+            font-size: 13px;
+            color: #95a5a6;
+        }
+
+        /* Analytics Section */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .analytics-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .analytics-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        /* Tabel CS */
+        .cs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .cs-table th {
+            background: #ecf0f1;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .cs-table td {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .cs-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .cs-table .progress-bar {
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 6px;
+            width: 100%;
+        }
+
+        .cs-table .progress-fill {
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        /* Data Table Section */
+        .data-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .data-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .data-table th {
+            background: #ecf0f1;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .data-table td:first-child {
+            color: #2980b9;
+            font-weight: 500;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            background: white;
+            color: #2c3e50;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover {
+            background: #ecf0f1;
+        }
+
+        .pagination button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .notification.success {
+            background: #2ecc71;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.info {
+            background: #3498db;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.7;
+            animation: loading 1s infinite;
+        }
+
+        @keyframes loading {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-actions {
+                width: 100%;
+            }
+
+            .filter-actions .btn {
+                flex: 1;
+            }
+
+            .kpi-value {
+                font-size: 28px;
+            }
+
+            .data-table {
+                font-size: 12px;
+                display: block;
+                overflow-x: auto;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-text h1 {
+                font-size: 20px;
+            }
+
+            .kpi-section {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.transferred {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .badge.pending {
+            background: #fdebd0;
+            color: #d68910;
+        }
+
+        /* No data message */
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #95a5a6;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>📊 Data Leads PARKEE</h1>
+                    <p>Rekap data leads yang masuk melalui Taptalk</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="triggerFileInput()">
+                        📁 Upload CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadData()">
+                        💾 Export Data
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        🗑️ Clear Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="yearFilter">Tahun</label>
+                <select id="yearFilter" onchange="applyFilters()">
+                    <option value="">Semua Tahun</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="monthFilter">Bulan</label>
+                <select id="monthFilter" onchange="applyFilters()">
+                    <option value="">Semua Bulan</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="resetFilters()">
+                    ↻ Reset Filter
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-section">
+            <div class="kpi-card leads">
+                <div class="kpi-label">Total Leads</div>
+                <div class="kpi-value" id="totalLeads">0</div>
+                <div class="kpi-subtitle">leads yang masuk melalui Taptalk</div>
+            </div>
+            <div class="kpi-card followup">
+                <div class="kpi-label">Total Follow Up</div>
+                <div class="kpi-value" id="totalFollowUp">0</div>
+                <div class="kpi-subtitle">data yang sudah di handle/follow up</div>
+            </div>
+            <div class="kpi-card transfer">
+                <div class="kpi-label">Leads Transfer ke BD</div>
+                <div class="kpi-value" id="leadsTransferred">0</div>
+                <div class="kpi-subtitle">data yang diteruskan ke BD untuk follow up lanjutan</div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="analytics-section">
+            <!-- Trend Chart -->
+            <div class="analytics-card">
+                <div class="analytics-title">📈 Trend Leads Bulanan</div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PIC CS Table -->
+            <div class="analytics-card">
+                <div class="analytics-title">👥 PIC Follow Up (CS)</div>
+                <table class="cs-table" id="csTable">
+                    <thead>
+                        <tr>
+                            <th>Nama CS</th>
+                            <th>Jumlah Leads</th>
+                            <th>Persentase</th>
+                        </tr>
+                    </thead>
+                    <tbody id="csTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Region Chart -->
+            <div class="analytics-card">
+                <div class="analytics-title">🌍 Distribusi Leads by Region</div>
+                <div class="chart-container">
+                    <canvas id="regionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PIC BD Chart -->
+            <div class="analytics-card">
+                <div class="analytics-title">💼 PIC Follow Up (BD)</div>
+                <div class="chart-container">
+                    <canvas id="bdChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="data-section">
+            <div class="data-header">
+                <div class="data-title">📋 Data Leads Detail</div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Cari berdasarkan nama, perusahaan, atau PIC CS..." onkeyup="filterTable()">
+                </div>
+            </div>
+            <div id="dataTableContainer">
+                <div class="no-data">Belum ada data. Silakan upload file CSV terlebih dahulu.</div>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="csvFile" accept=".csv" onchange="handleFileUpload(event)">
+
+    <script>
+        // Data management
+        const STORAGE_KEY = 'parkee_leads_data';
+        const MONTH_NAMES = {
+            'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
+            'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12
+        };
+        const MONTH_NAMES_ID = {
+            1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni',
+            7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+        };
+
+        // Embedded CSV data
+        const EMBEDDED_CSV_DATA = `Tanggal,Bulan,Nama,Perusahaan,Kebutuhan,Sumber,Region,PIC CS,PIC BD
+23/10/2025,October,Dimas Agung,Sinergiakses,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+29/10/2025,October,Munif,castle de guntur,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+15/11/2025,November,Albert,The Padel Point,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+20/11/2025,November,Harry Sarsito,PT. Andalan Sukses Mandiri,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+24/11/2025,November,Harsya,PT Airpos Solusi Indonesia,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+25/11/2025,November,Nancy Wantah,PT. Salam Pacific Indonesia Lines,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+25/11/2025,November,Salsa,PT. Kurnia Global Sukses,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+26/11/2025,November,Rani,Ojolali parkir,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+05/12/2025,December,Finarldi Rifki,PT AMAN SEJAHTERA SADAYANA,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+15/12/2025,December,Akhnan Aditya,Arah Coffee,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+15/12/2025,December,Dany Lie,PT Gunungsubur Sentosa,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+18/12/2025,December,MUHAMMAD HABIBI BAHRUL ULUM,PT. Bahrun Nafiah Solusindo,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+24/12/2025,December,Jonathan Kriswanto,CV. Kembali Kerja Bersama Saudara,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+27/12/2025,December,Hendra,PT. Sumbermakmur,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+04/01/2026,January,Lovella,PT. BSD Diamond Development,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+07/01/2026,January,aulia rahman wahyono,Pemda,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+08/01/2026,January,Hardiyanto Purnomo,Sekolah Cikal,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+08/01/2026,January,Aziz Ahmad,Tip Top,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+13/01/2026,January,Ronny,Sunter Icon,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+14/01/2026,January,Anastasia Larasati,PT Batik Hajadi /Gedung P46,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+14/01/2026,January,Dhea,Shelter Indonesia,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+15/01/2026,January,Zaky Ramadhan,PT Mulia Putri Lestari /Aston Cirebon,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+17/01/2026,January,Raditya Kurnia,Dispora Kota,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+21/01/2026,January,Kevin Situmorang,PT Hutabyte abinaya Inovasi,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+21/01/2026,January,Gilang Faturahman,-,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+21/01/2026,January,Denny ,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+23/01/2026,January,Ahmad Rifqi Taufiqie,PT Kode Niaga Tama,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+25/01/2026,January,Andy,PT Satu Lapangan Indonesia,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+25/01/2026,January,Rakhmanto,CV Surya Global Khair,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+26/01/2026,January,Naufal,Distrik 52,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+29/01/2026,January,Budi Cahyadi,RSIA SamMarie Basra,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+30/01/2026,January,Merlyn,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+06/02/2026,February,Muhammad Iskandar Halmi,First Parking,kerjasama sistem Parkir,Taptalk,Malaysia,Arif,Rama
+11/02/2026,February,Haris,PT USAHA MANDIRI TERPERCAYA,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+12/02/2026,February,Sigit,CV Kalima Fajar,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+18/02/2026,February,Selva Ananda,PT Pertamina Patra Niaga,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+21/02/2026,February,Eric,DoubleTree By Hilton Suravaya,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+23/02/2026,February,Ferdy,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+25/02/2026,February,Adhitya,Provices Group,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+26/02/2026,February,Ruby,PT MPI,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+02/03/2026,March,Risyad,PT Prima Delta Utama,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+03/03/2026,March,Zaidan,PT Blue Power Technology,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+03/03/2026,March,Kevin,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+08/03/2026,March,Sunil,Supratex,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+09/03/2026,March,Herman,Goldtek inc,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+10/03/2026,March,Fanny Irawati,PSF Group,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+12/03/2026,March,Izhar Rahman Dwi putera,PT JIEP,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+12/03/2026,March,Advin,CV Parkir next generation,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+13/03/2026,March,Merina,PT Mapan Sejahtera,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+16/03/2026,March,Anthony,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+18/03/2026,March,Hisyam,Jnice Cali Pati,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+18/03/2026,March,Yanuar,RS Bhakti Husada,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+31/03/2026,March,Wendi Sp,CV Sukmana Cipta,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+31/03/2026,March,Mustika Weni Putri,Urbanest Inn Villa,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+31/03/2026,March,Eka,Taman Mini Indonesia Indah,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+03/04/2026,April,David Setya,-,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+08/04/2026,April,Cindy Berliana,RS Setia Mitra,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+11/04/2026,April,Farhan,GOR Madiun,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+12/04/2026,April,Mohammad Ginastra,Owner ,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+13/04/2026,April,Intania,Samera Group,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+13/04/2026,April,Gideon,Kedai Tiap Hari,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+14/04/2026,April,Andri Ardiansyah,Waterboom bali,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+16/04/2026,April,Brendy,ATLAS,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+16/04/2026,April,Metya,Saint Joseph Sport Facilities,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+23/04/2026,April,Doddy Suitela,Nationwide Parking,kerjasama sistem Parkir,Taptalk,Australia,Arif,Arip
+23/04/2026,April,Imania,PT Perkasa Pilar Utama,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+24/04/2026,April,James wang,PT Hikvision Indonesia Technology,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+29/04/2026,April,Hansel,Beach Padel Club,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+04/05/2026,May,Restu,-,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+04/05/2026,May,Topan Ardiansyah Putra,PT. Patanjala Lumbung Raharja,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+06/05/2026,May,Ervan,Perorangan,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+07/05/2026,May,Arie Hakim,PT Jiari Terus Berlari,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+11/05/2026,May,kevin peranginangin,Perorangan,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+13/05/2026,May,Frengky,PT. Nebula jaya solusindo,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+14/05/2026,May,Hendri sopyan,Reli tennis,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+22/05/2026,May,Shidqi Izhari,Karimata Teknologi Nusantara,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+22/05/2026,May,Supardi,Terabyte Tech Solusi,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+29/05/2026,May,Yuda,PT Indah Buana Selaras,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+02/06/2026,June,Tri Wahyu Hidayat,Panorama Alam Impian (Pa Ali),kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+03/06/2026,June,Tanty,PT sumber semi lestari,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+04/06/2026,June,Rosa,PT. Minakrida Bhakti,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+04/06/2026,June,Abraham,Rumah Sakit Sinar Kasih Toraja,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+06/06/2026,June,Ali makmur,Owner / Pemilik lahan,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+17/06/2026,June,Fatia Rahma,Reco Fit,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+20/06/2026,June,AGUS,PT. PGS,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+20/06/2026,June,Renalto,Petojo arena,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+20/06/2026,June,Arga Gideon Hutajulu,Parkville Serpong,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+23/06/2026,June,nec surabaya,nec surabaya,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+23/06/2026,June,Bram,PT Unio Digital Investama,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+30/06/2026,June,Radona,PT Artajasa Pembayaran Elektronis,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+01/07/2026,July,Fahmi,Nobu Bank,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+08/07/2026,July,Sachi,PT. Tekonologi Inovasi Solusindo (Trustmedis),kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+10/07/2026,July,Sarifin,PT Mega teknik jaya,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+10/07/2026,July,Paul Handrikus,PT Pos Properti Indonesia,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+16/07/2026,July,Riwanto,PT Sinar Info Utama,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+16/07/2026,July,Micke Septi, PT. Hidup Baru Sukses ,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+17/07/2026,July,Delvin Pangestu,PT Gapura Intan Mandiri,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+18/07/2026,July,Rivaldi Adji,Pemdes Pongkar,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+20/07/2026,July,Jhon,perorangan/owner,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+20/07/2026,July,Annas,PT. PPJ,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+21/07/2026,July,Ingot Tardas,UTUSAN DARI PT. SPR ( BUMD),kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+22/07/2026,July,baby,Baby Parkir,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+29/07/2026,July,Gilbertus Adhimas Ragil (tim ancillary bisdev Ancol),PT Taman Impian Jaya Ancol,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Rama
+29/07/2026,July,Nur Rahman,Rs Roemani semarang,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+08/08/2026,August,Sheril,PT. Indonesia Defence Services,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+08/08/2026,August,Goldi,PT. Pesat Jaya Abadi (Tegar Parking),kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+08/08/2026,August,Marihot,RS CITAMA,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+10/08/2026,August,Hardi Purba,"DIMENSI MITRA DATA, CV",kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+12/08/2026,August,Indra Kowaas,KFC Tondano,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+13/08/2026,August,Fauzi,Perorangan,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+14/08/2026,August,Nuryani,PT. LINO MALIBU NUSANTARA,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+18/08/2026,August,Ferdy,PT Makmur Djaya Abadi,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Arip
+19/08/2026,August,Frans Santoso,PT. Sejahtera Sehat Karyautama,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+20/08/2026,August,Praditya,Railly Padel,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+22/08/2026,August,Dwi Putri,PT Easybook,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+26/08/2026,August,usep,Air Mas Perkasa,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+27/08/2026,August,Putri Puspa,PT Pulo Mas Jaya,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+27/08/2026,August,Dimas Pramudia,Surya negara group,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Arip
+28/08/2026,August,Denny ,Perorangan/lahan milik pribadi,kerjasama sistem Parkir,Taptalk,Indonesia,Gaida,Arip
+03/09/2026,September,Muthia,graha pos indonesia banda bandung,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama
+03/09/2026,September,Meta,PT Indo Safety Guardian,kerjasama sistem Parkir,Taptalk,Indonesia,Daud,Rama
+06/09/2026,September,Bekti,Rs. Haji,kerjasama sistem Parkir,Taptalk,Indonesia,Arif,Rama`;
+
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let trendChart = null;
+        let regionChart = null;
+        let bdChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Try load from storage first, if not found, use embedded data
+            loadDataFromStorage();
+            if (allData.length === 0) {
+                parseEmbeddedData();
+            }
+            if (allData.length > 0) {
+                initializeFilters();
+                applyFilters();
+                showNotification(`✅ Data siap! Total ${allData.length} leads dimuat.`, 'success');
+            }
+        });
+
+        // Parse embedded CSV data
+        function parseEmbeddedData() {
+            Papa.parse(EMBEDDED_CSV_DATA, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    allData = results.data.map((row, index) => ({
+                        id: index,
+                        tanggal: row.Tanggal || '',
+                        bulan: row.Bulan || '',
+                        nama: row.Nama || '',
+                        perusahaan: row.Perusahaan || '',
+                        kebutuhan: row.Kebutuhan || '',
+                        sumber: row.Sumber || '',
+                        region: row.Region || '',
+                        picCS: row['PIC CS'] || '',
+                        picBD: row['PIC BD'] || ''
+                    }));
+                    saveDataToStorage();
+                }
+            });
+        }
+
+        // Load data from localStorage
+        function loadDataFromStorage() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                allData = JSON.parse(stored);
+            }
+        }
+
+        // Save data to localStorage
+        function saveDataToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+        }
+
+        // Trigger file input
+        function triggerFileInput() {
+            document.getElementById('csvFile').click();
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    Papa.parse(csv, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            if (results.data.length === 0) {
+                                showNotification('File CSV kosong atau tidak valid', 'error');
+                                return;
+                            }
+
+                            // Process and deduplicate data
+                            allData = results.data.map((row, index) => ({
+                                id: index,
+                                tanggal: row.Tanggal || '',
+                                bulan: row.Bulan || '',
+                                nama: row.Nama || '',
+                                perusahaan: row.Perusahaan || '',
+                                kebutuhan: row.Kebutuhan || '',
+                                sumber: row.Sumber || '',
+                                region: row.Region || '',
+                                picCS: row['PIC CS'] || '',
+                                picBD: row['PIC BD'] || ''
+                            }));
+
+                            saveDataToStorage();
+                            initializeFilters();
+                            applyFilters();
+                            showNotification(`Berhasil mengimport ${allData.length} leads!`, 'success');
+                            document.getElementById('csvFile').value = '';
+                        },
+                        error: function(error) {
+                            showNotification('Error parsing CSV: ' + error.message, 'error');
+                        }
+                    });
+                } catch (error) {
+                    showNotification('Error membaca file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize filters
+        function initializeFilters() {
+            const years = new Set();
+            const months = new Set();
+
+            allData.forEach(row => {
+                if (row.tanggal) {
+                    const parts = row.tanggal.split('/');
+                    if (parts.length === 3) {
+                        const year = parts[2];
+                        years.add(year);
+                    }
+                }
+                if (row.bulan) {
+                    months.add(row.bulan);
+                }
+            });
+
+            // Populate year filter
+            const yearSelect = document.getElementById('yearFilter');
+            Array.from(years).sort().reverse().forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+
+            // Populate month filter with order
+            const monthSelect = document.getElementById('monthFilter');
+            const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            monthOrder.forEach(month => {
+                if (months.has(month)) {
+                    const option = document.createElement('option');
+                    option.value = month;
+                    option.textContent = MONTH_NAMES_ID[MONTH_NAMES[month]];
+                    monthSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const selectedYear = document.getElementById('yearFilter').value;
+            const selectedMonth = document.getElementById('monthFilter').value;
+
+            filteredData = allData.filter(row => {
+                let yearMatch = true;
+                let monthMatch = true;
+
+                if (selectedYear) {
+                    const parts = row.tanggal.split('/');
+                    if (parts.length === 3) {
+                        yearMatch = parts[2] === selectedYear;
+                    }
+                }
+
+                if (selectedMonth) {
+                    monthMatch = row.bulan === selectedMonth;
+                }
+
+                return yearMatch && monthMatch;
+            });
+
+            currentPage = 1;
+            updateDashboard();
+            updateDataTable();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('yearFilter').value = '';
+            document.getElementById('monthFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        // Update dashboard KPIs and charts
+        function updateDashboard() {
+            // KPI Cards
+            const totalLeads = filteredData.length;
+            const totalFollowUp = totalLeads;
+            const leadsTransferred = filteredData.filter(row => row.picBD && row.picBD.trim() !== '').length;
+
+            document.getElementById('totalLeads').textContent = totalLeads.toLocaleString('id-ID');
+            document.getElementById('totalFollowUp').textContent = totalFollowUp.toLocaleString('id-ID');
+            document.getElementById('leadsTransferred').textContent = leadsTransferred.toLocaleString('id-ID');
+
+            // Update CS Table
+            updateCSTable();
+
+            // Update Trend Chart
+            updateTrendChart();
+
+            // Update Region Chart
+            updateRegionChart();
+
+            // Update BD Chart
+            updateBDChart();
+        }
+
+        // Update CS Table
+        function updateCSTable() {
+            const csData = {};
+            
+            filteredData.forEach(row => {
+                const cs = row.picCS || 'Unknown';
+                csData[cs] = (csData[cs] || 0) + 1;
+            });
+
+            const total = filteredData.length;
+            const sorted = Object.entries(csData)
+                .map(([cs, count]) => ({
+                    cs,
+                    count,
+                    percentage: total > 0 ? ((count / total) * 100).toFixed(1) : 0
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            const tbody = document.getElementById('csTableBody');
+            tbody.innerHTML = '';
+
+            sorted.forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.cs}</td>
+                    <td>${item.count}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${item.percentage}%"></div>
+                            </div>
+                            ${item.percentage}%
+                        </div>
+                    </td>
+                `;
+            });
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="no-data">Tidak ada data</td></tr>';
+            }
+        }
+
+        // Update Trend Chart
+        function updateTrendChart() {
+            const monthData = {};
+            const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+
+            filteredData.forEach(row => {
+                const key = `${row.bulan}`;
+                monthData[key] = (monthData[key] || 0) + 1;
+            });
+
+            // Sort by calendar order
+            const sortedMonths = monthOrder.filter(m => monthData[m]);
+            const values = sortedMonths.map(m => monthData[m]);
+            const labels = sortedMonths.map(m => MONTH_NAMES_ID[MONTH_NAMES[m]]);
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            if (trendChart) {
+                trendChart.destroy();
+            }
+
+            trendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Leads',
+                        data: values,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12 },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Leads: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: Math.max(1, Math.floor(Math.max(...values) / 5)),
+                                callback: function(value) {
+                                    return value;
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Region Chart
+        function updateRegionChart() {
+            const regionData = {};
+            
+            filteredData.forEach(row => {
+                const region = row.region || 'Unknown';
+                regionData[region] = (regionData[region] || 0) + 1;
+            });
+
+            const sorted = Object.entries(regionData)
+                .map(([region, count]) => ({
+                    region,
+                    count
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            const labels = sorted.map(item => item.region);
+            const values = sorted.map(item => item.count);
+
+            const colors = [
+                'rgba(52, 152, 219, 0.7)',
+                'rgba(46, 204, 113, 0.7)',
+                'rgba(241, 196, 15, 0.7)',
+                'rgba(230, 126, 34, 0.7)',
+                'rgba(155, 89, 182, 0.7)',
+                'rgba(52, 73, 94, 0.7)',
+                'rgba(44, 62, 80, 0.7)',
+                'rgba(149, 165, 166, 0.7)'
+            ];
+
+            const ctx = document.getElementById('regionChart').getContext('2d');
+            
+            if (regionChart) {
+                regionChart.destroy();
+            }
+
+            regionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 12 },
+                                padding: 15,
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update BD Chart
+        function updateBDChart() {
+            const bdData = {};
+            
+            filteredData.forEach(row => {
+                const bd = row.picBD || 'Unknown';
+                bdData[bd] = (bdData[bd] || 0) + 1;
+            });
+
+            const sorted = Object.entries(bdData)
+                .map(([bd, count]) => ({
+                    bd,
+                    count
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            const labels = sorted.map(item => item.bd);
+            const values = sorted.map(item => item.count);
+
+            const ctx = document.getElementById('bdChart').getContext('2d');
+            
+            if (bdChart) {
+                bdChart.destroy();
+            }
+
+            bdChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Leads',
+                        data: values,
+                        backgroundColor: 'rgba(155, 89, 182, 0.7)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12 },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Leads: ' + context.parsed.x;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: Math.max(1, Math.floor(Math.max(...values) / 5)),
+                                callback: function(value) {
+                                    return value;
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update data table
+        function updateDataTable() {
+            const container = document.getElementById('dataTableContainer');
+
+            if (filteredData.length === 0) {
+                container.innerHTML = '<div class="no-data">Tidak ada data untuk ditampilkan</div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
+
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Tanggal</th>';
+            html += '<th>Nama</th>';
+            html += '<th>Perusahaan</th>';
+            html += '<th>Kebutuhan</th>';
+            html += '<th>Region</th>';
+            html += '<th>PIC CS</th>';
+            html += '<th>PIC BD</th>';
+            html += '<th>Status</th>';
+            html += '</tr></thead><tbody>';
+
+            pageData.forEach(row => {
+                const transferred = row.picBD && row.picBD.trim() !== '';
+                const status = transferred ? '<span class="badge transferred">✓ Transferred</span>' : '<span class="badge pending">⧗ Pending</span>';
+                
+                html += '<tr>';
+                html += `<td>${row.tanggal}</td>`;
+                html += `<td>${escapeHtml(row.nama)}</td>`;
+                html += `<td>${escapeHtml(row.perusahaan)}</td>`;
+                html += `<td>${escapeHtml(row.kebutuhan)}</td>`;
+                html += `<td>${escapeHtml(row.region)}</td>`;
+                html += `<td>${escapeHtml(row.picCS)}</td>`;
+                html += `<td>${escapeHtml(row.picBD)}</td>`;
+                html += `<td>${status}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            // Update pagination
+            updatePagination();
+        }
+
+        // Filter table (search)
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredData = allData.filter(row => {
+                const selectedYear = document.getElementById('yearFilter').value;
+                const selectedMonth = document.getElementById('monthFilter').value;
+
+                let yearMatch = true;
+                let monthMatch = true;
+
+                if (selectedYear) {
+                    const parts = row.tanggal.split('/');
+                    if (parts.length === 3) {
+                        yearMatch = parts[2] === selectedYear;
+                    }
+                }
+
+                if (selectedMonth) {
+                    monthMatch = row.bulan === selectedMonth;
+                }
+
+                const searchMatch = !searchTerm ||
+                    row.nama.toLowerCase().includes(searchTerm) ||
+                    row.perusahaan.toLowerCase().includes(searchTerm) ||
+                    row.picCS.toLowerCase().includes(searchTerm);
+
+                return yearMatch && monthMatch && searchMatch;
+            });
+
+            currentPage = 1;
+            updateDashboard();
+            updateDataTable();
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="pagination-info">Halaman ' + currentPage + ' dari ' + totalPages + '</div>';
+            
+            // Previous button
+            html += '<button ' + (currentPage === 1 ? 'disabled' : '') + ' onclick="previousPage()">← Sebelumnya</button>';
+
+            // Page buttons
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                html += '<button onclick="goToPage(1)">1</button>';
+                if (startPage > 2) html += '<span>...</span>';
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += '<button ' + (i === currentPage ? 'class="active"' : '') + ' onclick="goToPage(' + i + ')">' + i + '</button>';
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += '<span>...</span>';
+                html += '<button onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
+            }
+
+            // Next button
+            html += '<button ' + (currentPage === totalPages ? 'disabled' : '') + ' onclick="nextPage()">Berikutnya →</button>';
+
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            updateDataTable();
+            document.querySelector('.data-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateDataTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateDataTable();
+            }
+        }
+
+        // Download data
+        function downloadData() {
+            if (allData.length === 0) {
+                showNotification('Tidak ada data untuk diunduh', 'error');
+                return;
+            }
+
+            let csv = 'Tanggal,Bulan,Nama,Perusahaan,Kebutuhan,Sumber,Region,PIC CS,PIC BD\n';
+            
+            filteredData.forEach(row => {
+                csv += `"${row.tanggal}","${row.bulan}","${row.nama}","${row.perusahaan}","${row.kebutuhan}","${row.sumber}","${row.region}","${row.picCS}","${row.picBD}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'leads_parkee_' + new Date().toISOString().slice(0, 10) + '.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('Data berhasil diunduh', 'success');
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan.')) {
+                allData = [];
+                filteredData = [];
+                localStorage.removeItem(STORAGE_KEY);
+                
+                // Reset UI
+                document.getElementById('yearFilter').innerHTML = '<option value="">Semua Tahun</option>';
+                document.getElementById('monthFilter').innerHTML = '<option value="">Semua Bulan</option>';
+                document.getElementById('dataTableContainer').innerHTML = '<div class="no-data">Belum ada data. Silakan upload file CSV terlebih dahulu.</div>';
+                document.getElementById('pagination').innerHTML = '';
+                
+                // Reset KPI
+                document.getElementById('totalLeads').textContent = '0';
+                document.getElementById('totalFollowUp').textContent = '0';
+                document.getElementById('leadsTransferred').textContent = '0';
+                document.getElementById('csTableBody').innerHTML = '<tr><td colspan="3" class="no-data">Tidak ada data</td></tr>';
+
+                showNotification('Semua data berhasil dihapus', 'success');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
