@@ -706,6 +706,10 @@
     <script>
         // Data management
         const STORAGE_KEY = 'parkee_leads_data';
+        // Supabase (sumber data otomatis dari Google Sheets via autosync)
+        const SUPABASE_URL = 'https://jegvufypvzbtrihvqpzu.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_hTrV939MPHFs_OiqkMBiyQ_fG6jmhUy';
+        const SUPABASE_TABLE = 'cs_leads';
         const MONTH_NAMES = {
             'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
             'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12
@@ -848,18 +852,71 @@
         let regionChart = null;
         let bdChart = null;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Try load from storage first, if not found, use embedded data
-            loadDataFromStorage();
-            if (allData.length === 0) {
-                parseEmbeddedData();
+        // Load data dari Supabase (auto-sync dari Google Sheets)
+        async function loadFromSupabase(silent) {
+            try {
+                const resp = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=tanggal,bulan,nama,perusahaan,kebutuhan,sumber,region,pic_cs,pic_bd&order=id.asc`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const rows = await resp.json();
+                if (rows.length === 0) return false;
+                allData = rows.map((row, index) => ({
+                    id: index,
+                    tanggal: row.tanggal || '',
+                    bulan: row.bulan || '',
+                    nama: row.nama || '',
+                    perusahaan: row.perusahaan || '',
+                    kebutuhan: row.kebutuhan || '',
+                    sumber: row.sumber || '',
+                    region: row.region || '',
+                    picCS: row.pic_cs || '',
+                    picBD: row.pic_bd || ''
+                }));
+                saveDataToStorage(); // fallback offline
+                if (!silent) {
+                    showNotification(`✅ Data otomatis dari Google Sheets! Total ${allData.length} leads.`, 'success');
+                }
+                refreshDashboard();
+                return true;
+            } catch (e) {
+                if (!silent) showNotification('⚠️ Gagal ambil data dari server: ' + e.message, 'error');
+                return false;
             }
+        }
+
+        function refreshDashboard() {
             if (allData.length > 0) {
                 initializeFilters();
                 applyFilters();
-                showNotification(`✅ Data siap! Total ${allData.length} leads dimuat.`, 'success');
             }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prioritas: Supabase (auto-sync) -> localStorage -> embedded CSV
+            loadFromSupabase(false).then(ok => {
+                if (!ok) {
+                    loadDataFromStorage();
+                    if (allData.length === 0) {
+                        parseEmbeddedData();
+                    }
+                    if (allData.length > 0) {
+                        refreshDashboard();
+                        showNotification(`✅ Data siap! Total ${allData.length} leads dimuat (mode offline).`, 'success');
+                    }
+                }
+            });
+            // Auto-refresh tiap 60 detik supaya angka selalu ter-update tanpa reload
+            setInterval(function() {
+                const prevLen = allData.length;
+                loadFromSupabase(true).then(ok => {
+                    if (ok && allData.length !== prevLen) {
+                        refreshDashboard();
+                        showNotification(`🔄 Data ter-update! Total ${allData.length} leads.`, 'success');
+                    }
+                });
+            }, 60000);
         });
 
         // Parse embedded CSV data
@@ -903,10 +960,13 @@
             document.getElementById('csvFile').click();
         }
 
-        // Handle file upload
+        // Handle file upload (dinonaktifkan: data sekarang otomatis dari Google Sheets)
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
+            showNotification('ℹ️ Data sekarang otomatis dari Google Sheets — upload CSV manual tidak dipakai lagi.', 'info');
+            document.getElementById('csvFile').value = '';
+            return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
